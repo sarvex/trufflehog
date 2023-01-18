@@ -93,8 +93,8 @@ type Config struct {
 	ExcludeRepos,
 	// IncludeRepos is a list of repositories to include in the scan.
 	IncludeRepos,
-	// Directories is the list of directories to scan.
-	Directories []string
+	// Paths is the list of files and directories to scan.
+	Paths []string
 	// Filter is the filter to use to scan the source.
 	Filter *common.Filter
 }

@@ -76,8 +76,10 @@ var (
 	gitlabScanIncludePaths = gitlabScan.Flag("include-paths", "Path to file with newline separated regexes for files to include in scan.").Short('i').String()
 	gitlabScanExcludePaths = gitlabScan.Flag("exclude-paths", "Path to file with newline separated regexes for files to exclude in scan.").Short('x').String()
 
-	filesystemScan        = cli.Command("filesystem", "Find credentials in a filesystem.")
-	filesystemDirectories = filesystemScan.Flag("directory", "Path to directory to scan. You can repeat this flag.").Required().Strings()
+	filesystemScan  = cli.Command("filesystem", "Find credentials in a filesystem.")
+	filesystemPaths = filesystemScan.Arg("path", "Path to file or directory to scan.").Strings()
+	// --directory is deprecated in favor of arguments.
+	filesystemDirectories = filesystemScan.Flag("directory", "Path to directory to scan. You can repeat this flag.").Strings()
 	// TODO: Add more filesystem scan options. Currently only supports scanning a list of directories.
 	// filesystemScanRecursive = filesystemScan.Flag("recursive", "Scan recursively.").Short('r').Bool()
 	// filesystemScanIncludePaths = filesystemScan.Flag("include-paths", "Path to file with newline separated regexes for files to include in scan.").Short('i').String()
@@ -266,8 +268,13 @@ func run(state overseer.State) {
 			logrus.WithError(err).Fatal("Failed to scan GitLab.")
 		}
 	case filesystemScan.FullCommand():
+		if len(*filesystemDirectories) > 0 {
+			ctx.Logger().Info("--directory flag is deprecated, please pass directories as arguments")
+		}
 		fs := func(c *sources.Config) {
-			c.Directories = *filesystemDirectories
+			c.Paths = make([]string, 0, len(*filesystemPaths)+len(*filesystemDirectories))
+			c.Paths = append(c.Paths, *filesystemPaths...)
+			c.Paths = append(c.Paths, *filesystemDirectories...)
 		}
 
 		if err = e.ScanFileSystem(ctx, sources.NewConfig(fs)); err != nil {
